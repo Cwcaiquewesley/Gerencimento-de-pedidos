@@ -1,4 +1,3 @@
-
 import * as produtoRepository from '../repositories/produtos.repository.js'
 
 export async function cadastrar_produto(dados) {
