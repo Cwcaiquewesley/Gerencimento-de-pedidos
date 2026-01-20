@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Produto</title>
+    <link rel="stylesheet" href="../../public/css/main.css">
+    <link rel="stylesheet" href="../../public/css/produto.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Gerenciamento de Pedidos</h1>
+            <nav>
+                <ul>
+                    <li><a href="/">Início</a></li>
+                    <li><a href="/pedidos">Pedidos</a></li>
+                    <li><a href="/produtos" class="active">Produtos</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <main>
+            <section class="produtos-section">
+                <div class="section-header">
+                    <h2>Editar Produto #<%= produto.id %></h2>
+                </div>
+
+                <form action="/produtos/<%= produto.id %>" method="POST" class="form-produto" id="formProduto">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="nome">Nome do Produto:</label>
+                            <input type="text" id="nome" name="nome" value="<%= produto.nome %>" required placeholder="Digite o nome do produto">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="categoria">Categoria:</label>
+                            <input type="text" id="categoria" name="categoria" value="<%= produto.categoria %>" placeholder="Digite a categoria">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="descricao">Descrição:</label>
+                        <textarea id="descricao" name="descricao" rows="4" placeholder="Digite a descrição do produto"><%= produto.descricao %></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="preco">Preço (R$):</label>
+                            <input type="number" id="preco" name="preco" value="<%= produto.preco %>" min="0" step="0.01" required placeholder="0.00">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="estoque">Estoque:</label>
+                            <input type="number" id="estoque" name="estoque" value="<%= produto.estoque %>" min="0" required placeholder="0">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="sku">SKU:</label>
+                            <input type="text" id="sku" name="sku" value="<%= produto.sku %>" placeholder="Ex: PROD-001">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="codigo_barras">Código de Barras:</label>
+                            <input type="text" id="codigo_barras" name="codigo_barras" value="<%= produto.codigo_barras %>" placeholder="Digite o código de barras">
+                        </div>
+                    </div>
+
+                    <div class="form-group checkbox-group">
+                        <label for="ativo">
+                            <input type="checkbox" id="ativo" name="ativo" value="true" <% if (produto.ativo) { %>checked<% } %>>
+                            Produto Ativo
+                        </label>
+                    </div>
+
+                    <div class="info-historico">
+                        <p><strong>ID:</strong> <%= produto.id %></p>
+                        <p><strong>Criado em:</strong> <%= new Date(produto.data_criacao).toLocaleDateString('pt-BR') %></p>
+                        <% if (produto.data_atualizacao) { %>
+                            <p><strong>Última atualização:</strong> <%= new Date(produto.data_atualizacao).toLocaleDateString('pt-BR') %></p>
+                        <% } %>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                        <button type="button" class="btn btn-danger btn-delete-product" data-product-id="<%= produto.id %>">Deletar Produto</button>
+                        <a href="/produtos" class="btn btn-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 Sistema de Gerenciamento de Pedidos. Todos os direitos reservados.</p>
+        </footer>
+    </div>
+
+    <script src="/js/script.js"></script>
+    <script>
+        // Validação adicional do formulário
+        document.getElementById('formProduto').addEventListener('submit', function(e) {
+            const preco = parseFloat(document.getElementById('preco').value);
+            const estoque = parseInt(document.getElementById('estoque').value);
+
+            if (isNaN(preco) || preco < 0) {
+                e.preventDefault();
+                alert('Por favor, insira um preço válido');
+                return;
+            }
+
+            if (isNaN(estoque) || estoque < 0) {
+                e.preventDefault();
+                alert('Por favor, insira uma quantidade válida para o estoque');
+                return;
+            }
+        });
+
+        // Máscara para campos monetários
+        document.getElementById('preco').addEventListener('blur', function(e) {
+            let value = parseFloat(e.target.value);
+            if (!isNaN(value)) {
+                e.target.value = value.toFixed(2);
+            }
+        });
+
+        // Evento para deletar produto
+        document.querySelector('.btn-delete-product').addEventListener('click', function() {
+            const productId = this.dataset.productId;
+            if (confirm('Tem certeza que deseja deletar este produto? Esta ação não pode ser desfeita.')) {
+                fetch(`/produtos/${productId}`, {
+                    method: 'DELETE'
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert('Produto deletado com sucesso!');
+                        location.href = '/produtos';
+                    } else {
+                        alert('Erro ao deletar produto');
+                    }
+                })
+                .catch(error => console.error('Erro:', error));
+            }
+        });
+    </script>
+</body>
+</html>
