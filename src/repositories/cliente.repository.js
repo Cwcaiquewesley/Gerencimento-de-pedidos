@@ -27,7 +27,7 @@ export async function atualizar_cliente(id, dados) {
     if (dados.documento) atualizacao.documento = dados.documento
 
     await Cliente.update(atualizacao, {
-        where: { id }
+        where: { idCliente: id }
     })
     
     const resultado = await Cliente.findByPk(id)

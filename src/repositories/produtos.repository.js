@@ -43,7 +43,7 @@ export async function atualizar_produto(id, dados) {
     atualizacao.status = dados.status
   }
 
-  await Produto.update(atualizacao, { where: { id } })
+  await Produto.update(atualizacao, { where: { idProduto: id } })
 
   const resultado = await Produto.findByPk(id)
   return { rows: [resultado.toJSON()] }
