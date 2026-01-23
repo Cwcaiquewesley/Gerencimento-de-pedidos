@@ -1,20 +1,28 @@
 import * as produtoRepository from '../repositories/produtos.repository.js'
 
 export async function cadastrar_produto(dados) {
-    const nome = String(dados.nome ?? '').trim()
-    const tipo = String(dados.tipo ?? '').trim()
-    const valor = Number(dados.valor)
-    const quantidade = Number(dados.quantidade)
-    const status = Boolean(dados.status ?? true)
+  const nomeProduto = String(dados.nomeProduto ?? '').trim()
+  const tipo = String(dados.tipo ?? '').trim()
+  const valor = Number(dados.valor)
+  const quantidade = Number(dados.quantidade)
+  const status = dados.status === undefined ? true : Boolean(dados.status)
 
-    if (!nome) throw new Error('nome é obrigatório')
-    if (!tipo) throw new Error('tipo é obrigatório')
-    if (!Number.isFinite(valor) || valor < 0) throw new Error('valor inválido')
-    if (!Number.isInteger(quantidade) || quantidade < 0) throw new Error('quantidade inválida')
+  if (!nomeProduto) throw new Error('nomeProduto é obrigatório')
+  if (!tipo) throw new Error('tipo é obrigatório')
+  if (!Number.isFinite(valor) || valor < 0) throw new Error('valor inválido')
+  if (!Number.isInteger(quantidade) || quantidade < 0) throw new Error('quantidade inválida')
 
-    const result = await produtoRepository.cadastrar_produto({ nome, tipo, valor, quantidade, status })
-    return result.rows[0]
+  const result = await produtoRepository.cadastrar_produto({
+    nomeProduto,
+    tipo,
+    valor,
+    quantidade,
+    status
+  })
+  return result.rows[0]
 }
+
+
 
 export async function listar_produtos() {
     const result = await produtoRepository.listar_produtos()

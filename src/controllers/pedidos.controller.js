@@ -62,3 +62,21 @@ export async function deletar_pedido(req, res) {
         return res.status(500).json({ erro: err.message })
     }
 }
+
+
+export async function entregar_pedido(req, res) {
+  try {
+    const id = req.params.id
+    const dados = req.body   // { local }
+
+    const pedido = await pedidosService.entregar_pedido(id, dados)
+
+    if (!pedido) {
+      return res.status(404).json({ erro: 'Pedido não encontrado' })
+    }
+
+    return res.status(200).json(pedido)
+  } catch (erro) {
+    return res.status(400).json({ erro: erro.message })
+  }
+}
