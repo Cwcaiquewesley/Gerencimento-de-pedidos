@@ -50,7 +50,7 @@ export async function deletar_produto(req, res) {
     }
 }
 
-export async function atualizar_status_produto(req, res) {
+export async function atualizar_produto(req, res) {
   try {
     const id = Number(req.params.id)
 
@@ -58,7 +58,7 @@ export async function atualizar_status_produto(req, res) {
       return res.status(400).json({ erro: 'ID inválido' })
     }
 
-    const produto = await produtosService.atualizar_status_produto(id, req.body)
+    const produto = await produtosService.atualizar_produto(id, req.body)
 
     if (!produto) {
       return res.status(404).json({ erro: 'Produto não encontrado' })
@@ -69,3 +69,4 @@ export async function atualizar_status_produto(req, res) {
     return res.status(500).json({ erro: err.message })
   }
 }
+
