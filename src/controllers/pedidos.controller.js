@@ -80,3 +80,12 @@ export async function entregar_pedido(req, res) {
     return res.status(400).json({ erro: erro.message })
   }
 }
+
+export async function listar_itens(req, res) {
+    try {
+        const itens = await pedidosService.listar_itens()
+        return res.status(200).json(itens)
+    } catch (err) {
+        return res.status(500).json({ erro: err.message })
+    }
+}
