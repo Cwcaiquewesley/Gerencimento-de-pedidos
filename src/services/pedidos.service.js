@@ -139,3 +139,8 @@ export async function entregar_pedido(id, dados) {
   );
   return result.rows[0];
 }
+
+export async function listar_itens() {
+  const result = await pedidoRepository.listar_todos_os_itens()
+  return result.rows
+}
