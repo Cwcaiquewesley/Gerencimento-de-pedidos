@@ -1,14 +1,20 @@
-import { Pedido } from "../models/Pedido.js";
+import { Pedido, ItemPedido, Produto } from "../models/index.js";
 import { QueryTypes } from "sequelize";
-import sequelize from '../config/database.js'
-import { ItemPedido } from '../models/ItemPedido.js'
+import sequelize from '../config/database.js';
 
 
 export async function cadastrar_pedido_com_procedure(dados) {
-  // dados.itens: [{ idProduto, quantidade }, ...]
+  // Garantir que o tipo existe antes de cadastrar (caso o banco tenha sido resetado)
+  await sequelize.query(`
+    DO $$ 
+    BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'tipo_item_pedido') THEN
+            CREATE TYPE tipo_item_pedido AS (idProduto INT, quantidade INT);
+        END IF;
+    END $$;
+  `);
 
   // Monta string do array ::tipo_item_pedido[]
-  // Ex.: ARRAY[ (1,2), (3,1) ]::tipo_item_pedido[]
   const itensArrayLiteral =
     "ARRAY[" +
     dados.itens
@@ -47,8 +53,29 @@ export async function listar_pedidos() {
 }
 
 export async function buscar_pedido(id) {
-  const resultado = await Pedido.findByPk(id);
-  return resultado ? { rows: [resultado.toJSON()] } : { rows: [] };
+  const resultado = await Pedido.findByPk(id, {
+    include: [{ model: Cliente }]
+  });
+  if (!resultado) return { rows: [] };
+
+  const itens = await ItemPedido.findAll({
+    where: { idPedido: id },
+    include: [{ 
+      model: Produto,
+      attributes: ['nomeProduto']
+    }]
+  });
+
+  const pedidoJson = resultado.toJSON();
+  pedidoJson.itens = itens.map(item => {
+    const itemJson = item.toJSON();
+    if (item.Produto) {
+      itemJson.produto_nome = item.Produto.nomeProduto;
+    }
+    return itemJson;
+  });
+
+  return { rows: [pedidoJson] };
 }
 
 export async function atualizar_pedido(id, dados) {
@@ -107,5 +134,15 @@ export async function entregar_pedido(idPedido, local) {
   // buscar o pedido atualizado para retornar
   const resultado = await Pedido.findByPk(idPedido)
   return { rows: [resultado.toJSON()] }
+}
+
+export async function listar_todos_os_itens() {
+  const resultado = await ItemPedido.findAll({
+    include: [
+      { model: Produto, attributes: ['nomeProduto'] },
+      { model: Pedido, attributes: ['horaPedido', 'idCliente'] }
+    ]
+  })
+  return { rows: resultado.map(i => i.toJSON()) }
 }
 
