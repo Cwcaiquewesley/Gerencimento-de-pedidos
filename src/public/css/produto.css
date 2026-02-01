@@ -28,7 +28,6 @@
 
 .table-produtos tbody tr:hover {
     background-color: #fffbeb;
-    transform: scale(1.01);
     box-shadow: var(--shadow-sm);
 }
 
