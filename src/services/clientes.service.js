@@ -1,5 +1,10 @@
 import * as clienteRepository from '../repositories/cliente.repository.js'
 
+function validarEmail(email) {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return re.test(email)
+}
+
 export async function cadastrar_cliente(dados) {
     const nomeCliente = String(dados.nomeCliente ?? '').trim()
     const contato = String(dados.contato ?? '').trim()
@@ -7,6 +12,7 @@ export async function cadastrar_cliente(dados) {
 
     if (!nomeCliente) throw new Error('nomeCliente é obrigatório')
     if (!contato) throw new Error('contato é obrigatório')
+    if (!validarEmail(contato)) throw new Error('O contato deve ser um e-mail válido')
     if (!documento) throw new Error('documento é obrigatório')
 
     const result = await clienteRepository.cadastrar_cliente({ nomeCliente, contato, documento })
@@ -36,6 +42,7 @@ export async function atualizar_cliente(id, dados) {
 
     if (nomeCliente === '') throw new Error('nomeCliente não pode ser vazio')
     if (contato === '') throw new Error('contato não pode ser vazio')
+    if (contato && !validarEmail(contato)) throw new Error('O contato deve ser um e-mail válido')
     if (documento === '') throw new Error('documento não pode ser vazio')
 
     const dadosAtualizar = {}
