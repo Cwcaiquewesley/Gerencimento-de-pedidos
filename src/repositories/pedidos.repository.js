@@ -30,7 +30,7 @@ export async function cadastrar_pedido_com_procedure(dados) {
     )
   `;
 
-  // Se a procedure não faz SELECT, não há linhas de retorno
+  // Executa a procedure uma única vez
   await sequelize.query(sql, {
     replacements: {
       idCliente: dados.idCliente,
@@ -39,12 +39,7 @@ export async function cadastrar_pedido_com_procedure(dados) {
     type: QueryTypes.RAW,
   });
 
-  const [rows] = await sequelize.query(sql, {
-    replacements: { idCliente: dados.idCliente, local: dados.local },
-    type: QueryTypes.SELECT,
-  });
-
-  return { rows };
+  return { rows: [{ mensagem: "Pedido cadastrado com sucesso" }] };
 }
 
 export async function listar_pedidos() {
