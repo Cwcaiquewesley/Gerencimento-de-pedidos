@@ -1,5 +1,5 @@
 
-CREATE TABLE Cliente (
+CREATE TABLE Clientes (
     idCliente SERIAL PRIMARY KEY,
     nomeCliente VARCHAR(255) NOT NULL,
     contato VARCHAR(20) NOT NULL,
@@ -7,7 +7,7 @@ CREATE TABLE Cliente (
     dataCadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE Produto (
+CREATE TABLE Produtos (
     idProduto SERIAL PRIMARY KEY,
     nomeProduto VARCHAR(255) NOT NULL,
     tipo VARCHAR(100) NOT NULL,
@@ -17,7 +17,7 @@ CREATE TABLE Produto (
     dataCadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE Pedido (
+CREATE TABLE Pedidos (
     idPedido SERIAL PRIMARY KEY,
     idCliente INT NOT NULL REFERENCES Cliente(idCliente),
     local VARCHAR(255) NOT NULL,
@@ -26,7 +26,7 @@ CREATE TABLE Pedido (
     valorTotal FLOAT DEFAULT 0
 );
 
-CREATE TABLE ItemPedido (
+CREATE TABLE ItemPedidos (
     idItem SERIAL PRIMARY KEY,
     idPedido INT NOT NULL REFERENCES Pedido(idPedido),
     idProduto INT NOT NULL REFERENCES Produto(idProduto),

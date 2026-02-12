@@ -2,7 +2,7 @@ import pool from '../config/database.js'
 
 export async function cadastrar_cliente(dados) {
     const query = `
-        INSERT INTO "Cliente" ("nomeCliente", "contato", "documento")
+        INSERT INTO Clientes (nomeCliente, contato, documento)
         VALUES ($1, $2, $3)
         RETURNING *
     `
@@ -11,12 +11,12 @@ export async function cadastrar_cliente(dados) {
 }
 
 export async function listar_clientes() {
-    const { rows } = await pool.query('SELECT * FROM "Cliente"')
+    const { rows } = await pool.query('SELECT * FROM Clientes')
     return { rows }
 }
 
 export async function buscar_cliente(id) {
-    const { rows } = await pool.query('SELECT * FROM "Cliente" WHERE "idCliente" = $1', [id])
+    const { rows } = await pool.query('SELECT * FROM Clientes WHERE idCliente = $1', [id])
     return { rows }
 }
 
@@ -26,15 +26,15 @@ export async function atualizar_cliente(id, dados) {
     let contador = 1
 
     if (dados.nomeCliente) {
-        campos.push(`"nomeCliente" = $${contador++}`)
+        campos.push(`nomeCliente = $${contador++}`)
         valores.push(dados.nomeCliente)
     }
     if (dados.contato) {
-        campos.push(`"contato" = $${contador++}`)
+        campos.push(`contato = $${contador++}`)
         valores.push(dados.contato)
     }
     if (dados.documento) {
-        campos.push(`"documento" = $${contador++}`)
+        campos.push(`documento = $${contador++}`)
         valores.push(dados.documento)
     }
 
@@ -44,9 +44,9 @@ export async function atualizar_cliente(id, dados) {
 
     valores.push(id)
     const query = `
-        UPDATE "Cliente"
+        UPDATE Clientes
         SET ${campos.join(', ')}
-        WHERE "idCliente" = $${contador}
+        WHERE idCliente = $${contador}
         RETURNING *
     `
     const { rows } = await pool.query(query, valores)
@@ -54,6 +54,6 @@ export async function atualizar_cliente(id, dados) {
 }
 
 export async function deletar_cliente(id) {
-    await pool.query('DELETE FROM "Cliente" WHERE "idCliente" = $1', [id])
+    await pool.query('DELETE FROM Clientes WHERE idCliente = $1', [id])
     return { rows: [{ id }] }
 }

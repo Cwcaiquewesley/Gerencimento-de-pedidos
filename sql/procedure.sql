@@ -14,12 +14,12 @@ DECLARE
     v_valorUnit  FLOAT;
     v_valorTotal FLOAT := 0;
 BEGIN
-    -- Cria o pedido
+    
     INSERT INTO Pedido (idCliente, local, horaPedido, valorTotal)
     VALUES (p_idCliente, p_local, CURRENT_TIMESTAMP, 0)
     RETURNING idPedido INTO v_idPedido;
 
-    -- Insere itens e acumula o total
+    
     FOREACH v_item IN ARRAY p_itens LOOP
         SELECT valor
           INTO v_valorUnit
@@ -42,7 +42,7 @@ BEGIN
         v_valorTotal := v_valorTotal + (v_valorUnit * v_item.quantidade);
     END LOOP;
 
-    -- Atualiza valor total do pedido
+    
     UPDATE Pedido
        SET valorTotal = v_valorTotal
      WHERE idPedido = v_idPedido;

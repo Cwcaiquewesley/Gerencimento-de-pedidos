@@ -10,9 +10,9 @@ BEGIN
 END;
 $$;
 
-DROP TRIGGER IF EXISTS t_desativar_produto_sem_estoque ON "Produto";
+DROP TRIGGER IF EXISTS t_desativar_produto_sem_estoque ON Produto;
 
 CREATE TRIGGER t_desativar_produto_sem_estoque
-BEFORE INSERT OR UPDATE ON "Produto"
+BEFORE INSERT OR UPDATE ON Produto
 FOR EACH ROW
 EXECUTE FUNCTION trg_desativar_produto_sem_estoque();

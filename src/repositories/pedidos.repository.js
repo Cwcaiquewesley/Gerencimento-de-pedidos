@@ -27,17 +27,17 @@ export async function cadastrar_pedido_com_procedure(dados) {
 }
 
 export async function listar_pedidos() {
-  const { rows } = await pool.query('SELECT * FROM "Pedido"');
+  const { rows } = await pool.query('SELECT * FROM Pedidos');
   return { rows };
 }
 
 export async function buscar_pedido(id) {
 
   const queryPedido = `
-    SELECT p.*, c."nomeCliente"
-    FROM "Pedido" p
-    JOIN "Cliente" c ON p."idCliente" = c."idCliente"
-    WHERE p."idPedido" = $1
+    SELECT p.*, c.nomeCliente
+    FROM Pedidos p
+    JOIN sClientes c ON p.idCliente = c.idCliente
+    WHERE p.idPedido = $1
   `;
   const resultPedido = await pool.query(queryPedido, [id]);
 
@@ -48,10 +48,10 @@ export async function buscar_pedido(id) {
   const pedido = resultPedido.rows[0];
 
   const queryItens = `
-    SELECT ip.*, pr."nomeProduto" as produto_nome
-    FROM "ItemPedido" ip
-    JOIN "Produto" pr ON ip."idProduto" = pr."idProduto"
-    WHERE ip."idPedido" = $1
+    SELECT ip.*, pr.nomeProduto as produto_nome
+    FROM ItemPedido ip
+    JOIN Produtos pr ON ip.idProduto = pr.idProduto
+    WHERE ip.idPedido = $1
   `;
   const resultItens = await pool.query(queryItens, [id]);
 
@@ -68,23 +68,23 @@ export async function atualizar_pedido(id, dados) {
   let contador = 1;
 
   if (dados.idCliente !== undefined) {
-    campos.push(`"idCliente" = $${contador++}`);
+    campos.push(`idCliente = $${contador++}`);
     valores.push(dados.idCliente);
   }
   if (dados.local !== undefined) {
-    campos.push(`"local" = $${contador++}`);
+    campos.push(`local = $${contador++}`);
     valores.push(dados.local);
   }
   if (dados.horaPedido !== undefined) {
-    campos.push(`"horaPedido" = $${contador++}`);
+    campos.push(`horaPedido = $${contador++}`);
     valores.push(dados.horaPedido);
   }
   if (dados.horaEntrega !== undefined) {
-    campos.push(`"horaEntrega" = $${contador++}`);
+    campos.push(`horaEntrega = $${contador++}`);
     valores.push(dados.horaEntrega);
   }
   if (dados.valorTotal !== undefined) {
-    campos.push(`"valorTotal" = $${contador++}`);
+    campos.push(`valorTotal = $${contador++}`);
     valores.push(dados.valorTotal);
   }
 
@@ -94,9 +94,9 @@ export async function atualizar_pedido(id, dados) {
 
   valores.push(id);
   const query = `
-    UPDATE "Pedido"
+    UPDATE Pedidos
     SET ${campos.join(', ')}
-    WHERE "idPedido" = $${contador}
+    WHERE idPedido = $${contador}
     RETURNING *
   `;
 
@@ -105,8 +105,8 @@ export async function atualizar_pedido(id, dados) {
 }
 
 export async function deletar_pedido(id) {
-  await pool.query('DELETE FROM "ItemPedido" WHERE "idPedido" = $1', [id]);
-  await pool.query('DELETE FROM "Pedido" WHERE "idPedido" = $1', [id]);
+  await pool.query('DELETE FROM ItemPedidos WHERE idPedido = $1', [id]);
+  await pool.query('DELETE FROM Pedidos WHERE idPedido = $1', [id]);
 
   return { rows: [{ id }] };
 }
@@ -120,10 +120,10 @@ export async function entregar_pedido(idPedido, local) {
 
 export async function listar_todos_os_itens() {
   const query = `
-    SELECT ip.*, p."nomeProduto", pe."horaPedido", pe."idCliente", pe."local", pe."horaEntrega"
-    FROM "ItemPedido" ip
-    JOIN "Produto" p ON ip."idProduto" = p."idProduto"
-    JOIN "Pedido" pe ON ip."idPedido" = pe."idPedido"
+    SELECT ip.*, p.nomeProduto, pe.horaPedido, pe.idCliente, pe.local, pe.horaEntrega
+    FROM ItemPedidos ip
+    JOIN Produtos p ON ip.idProduto = p.idProduto
+    JOIN Pedidos pe ON ip.idPedido = pe.idPedido
   `;
   const { rows } = await pool.query(query);
   return { rows };
