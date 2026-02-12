@@ -1,4 +1,5 @@
 import * as produtosService from '../services/produtos.service.js'
+import { validarID } from '../middlewares/validate.middleware.js'
 
 export async function cadastrar_produto(req, res) {
     try{
@@ -46,9 +47,11 @@ export async function deletar_produto(req, res) {
 
         return res.status(200).json(produto)
     } catch (err) {
-        return res.status(500).json({ erro: err.message})
+        return res.status(500).json({ erro: err.message })
     }
 }
+    
+
 
 export async function atualizar_produto(req, res) {
   try {

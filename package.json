@@ -13,11 +13,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "dotenv": "^17.2.3",
-    "ejs": "^4.0.1",
+    "dotenv": "^17.2.4",
     "express": "^5.2.1",
-    "pg": "^8.17.1",
-    "sequelize": "^6.37.7",
-    "sqlite3": "^5.1.7"
+    "pg": "^8.17.1"
   }
 }

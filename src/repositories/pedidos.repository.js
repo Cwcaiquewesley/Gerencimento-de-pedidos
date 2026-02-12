@@ -1,11 +1,8 @@
-import { Pedido, ItemPedido, Produto, Cliente } from "../models/index.js";
-import { QueryTypes } from "sequelize";
-import sequelize from '../config/database.js';
-
+import pool from '../config/database.js';
 
 export async function cadastrar_pedido_com_procedure(dados) {
-  // Garantir que o tipo existe antes de cadastrar (caso o banco tenha sido resetado)
-  await sequelize.query(`
+
+  await pool.query(`
     DO $$ 
     BEGIN
         IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'tipo_item_pedido') THEN
@@ -14,7 +11,7 @@ export async function cadastrar_pedido_com_procedure(dados) {
     END $$;
   `);
 
-  // Monta string do array ::tipo_item_pedido[]
+
   const itensArrayLiteral =
     "ARRAY[" +
     dados.itens
@@ -22,112 +19,113 @@ export async function cadastrar_pedido_com_procedure(dados) {
       .join(", ") +
     "]::tipo_item_pedido[]";
 
-  const sql = `
-    CALL cadastrar_pedido(
-      :idCliente,
-      :local,
-      ${itensArrayLiteral}
-    )
-  `;
+  const query = `CALL cadastrar_pedido($1, $2, ${itensArrayLiteral})`;
 
-  // Executa a procedure uma única vez
-  await sequelize.query(sql, {
-    replacements: {
-      idCliente: dados.idCliente,
-      local: dados.local,
-    },
-    type: QueryTypes.RAW,
-  });
+  await pool.query(query, [dados.idCliente, dados.local]);
 
   return { rows: [{ mensagem: "Pedido cadastrado com sucesso" }] };
 }
 
 export async function listar_pedidos() {
-  const resultado = await Pedido.findAll();
-  return { rows: resultado.map((p) => p.toJSON()) };
+  const { rows } = await pool.query('SELECT * FROM "Pedido"');
+  return { rows };
 }
 
 export async function buscar_pedido(id) {
-  const resultado = await Pedido.findByPk(id, {
-    include: [{ model: Cliente }]
-  });
-  if (!resultado) return { rows: [] };
 
-  const itens = await ItemPedido.findAll({
-    where: { idPedido: id },
-    include: [{ 
-      model: Produto,
-      attributes: ['nomeProduto']
-    }]
-  });
+  const queryPedido = `
+    SELECT p.*, c."nomeCliente"
+    FROM "Pedido" p
+    JOIN "Cliente" c ON p."idCliente" = c."idCliente"
+    WHERE p."idPedido" = $1
+  `;
+  const resultPedido = await pool.query(queryPedido, [id]);
 
-  const pedidoJson = resultado.toJSON();
-  pedidoJson.itens = itens.map(item => {
-    const itemJson = item.toJSON();
-    if (item.Produto) {
-      itemJson.produto_nome = item.Produto.nomeProduto;
-    }
-    return itemJson;
-  });
+  if (resultPedido.rows.length === 0) {
+    return { rows: [] };
+  }
 
-  return { rows: [pedidoJson] };
+  const pedido = resultPedido.rows[0];
+
+  const queryItens = `
+    SELECT ip.*, pr."nomeProduto" as produto_nome
+    FROM "ItemPedido" ip
+    JOIN "Produto" pr ON ip."idProduto" = pr."idProduto"
+    WHERE ip."idPedido" = $1
+  `;
+  const resultItens = await pool.query(queryItens, [id]);
+
+  pedido.itens = resultItens.rows;
+
+
+
+  return { rows: [pedido] };
 }
 
 export async function atualizar_pedido(id, dados) {
-  const atualizacao = {};
+  const campos = [];
+  const valores = [];
+  let contador = 1;
 
-  if (dados.idCliente !== undefined) atualizacao.idCliente = dados.idCliente;
-  if (dados.local !== undefined) atualizacao.local = dados.local;
-  if (dados.horaPedido !== undefined) atualizacao.horaPedido = dados.horaPedido;
-  if (dados.horaEntrega !== undefined) atualizacao.horaEntrega = dados.horaEntrega;
-  if (dados.valorTotal !== undefined) atualizacao.valorTotal = dados.valorTotal;
-
-  if (Object.keys(atualizacao).length === 0) {
-    const existente = await Pedido.findByPk(id);
-    return { rows: existente ? [existente.toJSON()] : [] };
+  if (dados.idCliente !== undefined) {
+    campos.push(`"idCliente" = $${contador++}`);
+    valores.push(dados.idCliente);
+  }
+  if (dados.local !== undefined) {
+    campos.push(`"local" = $${contador++}`);
+    valores.push(dados.local);
+  }
+  if (dados.horaPedido !== undefined) {
+    campos.push(`"horaPedido" = $${contador++}`);
+    valores.push(dados.horaPedido);
+  }
+  if (dados.horaEntrega !== undefined) {
+    campos.push(`"horaEntrega" = $${contador++}`);
+    valores.push(dados.horaEntrega);
+  }
+  if (dados.valorTotal !== undefined) {
+    campos.push(`"valorTotal" = $${contador++}`);
+    valores.push(dados.valorTotal);
   }
 
-  const [afetados] = await Pedido.update(atualizacao, { where: { idPedido: id } });
+  if (campos.length === 0) {
+    return buscar_pedido(id);
+  }
 
-  if (afetados === 0) return { rows: [] };
+  valores.push(id);
+  const query = `
+    UPDATE "Pedido"
+    SET ${campos.join(', ')}
+    WHERE "idPedido" = $${contador}
+    RETURNING *
+  `;
 
-  const resultado = await Pedido.findByPk(id);
-  return { rows: [resultado.toJSON()] };
+  const { rows } = await pool.query(query, valores);
+  return { rows };
 }
 
 export async function deletar_pedido(id) {
-  await ItemPedido.destroy({
-    where: { idPedido: id }
-  })
-  await Pedido.destroy({
-    where: { idPedido: id }
-  })
+  await pool.query('DELETE FROM "ItemPedido" WHERE "idPedido" = $1', [id]);
+  await pool.query('DELETE FROM "Pedido" WHERE "idPedido" = $1', [id]);
 
-  return { rows: [{ id }] }
+  return { rows: [{ id }] };
 }
 
-
 export async function entregar_pedido(idPedido, local) {
-  await sequelize.query(
-    'CALL entregar_pedido(:idPedido, :local)',
-    {
-      replacements: { idPedido, local },
-      type: QueryTypes.RAW
-    }
-  )
+  await pool.query('CALL entregar_pedido($1, $2)', [idPedido, local]);
 
-  // buscar o pedido atualizado para retornar
-  const resultado = await Pedido.findByPk(idPedido)
-  return { rows: [resultado.toJSON()] }
+  // Retorna pedido atualizado
+  return buscar_pedido(idPedido);
 }
 
 export async function listar_todos_os_itens() {
-  const resultado = await ItemPedido.findAll({
-    include: [
-      { model: Produto, attributes: ['nomeProduto'] },
-      { model: Pedido, attributes: ['horaPedido', 'idCliente', 'local', 'horaEntrega'] }
-    ]
-  })
-  return { rows: resultado.map(i => i.toJSON()) }
+  const query = `
+    SELECT ip.*, p."nomeProduto", pe."horaPedido", pe."idCliente", pe."local", pe."horaEntrega"
+    FROM "ItemPedido" ip
+    JOIN "Produto" p ON ip."idProduto" = p."idProduto"
+    JOIN "Pedido" pe ON ip."idPedido" = pe."idPedido"
+  `;
+  const { rows } = await pool.query(query);
+  return { rows };
 }
 

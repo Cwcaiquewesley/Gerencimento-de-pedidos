@@ -1,42 +1,59 @@
-import { Cliente } from '../models/index.js'
+import pool from '../config/database.js'
 
 export async function cadastrar_cliente(dados) {
-    const resultado = await Cliente.create({
-        nomeCliente: dados.nomeCliente,
-        contato: dados.contato,
-        documento: dados.documento
-    })
-    
-    return { rows: [resultado.toJSON()] }
+    const query = `
+        INSERT INTO "Cliente" ("nomeCliente", "contato", "documento")
+        VALUES ($1, $2, $3)
+        RETURNING *
+    `
+    const { rows } = await pool.query(query, [dados.nomeCliente, dados.contato, dados.documento])
+    return { rows }
 }
 
 export async function listar_clientes() {
-    const resultado = await Cliente.findAll()
-    return { rows: resultado.map(c => c.toJSON()) }
+    const { rows } = await pool.query('SELECT * FROM "Cliente"')
+    return { rows }
 }
 
 export async function buscar_cliente(id) {
-    const resultado = await Cliente.findByPk(id)
-    return resultado ? { rows: [resultado.toJSON()] } : { rows: [] }
+    const { rows } = await pool.query('SELECT * FROM "Cliente" WHERE "idCliente" = $1', [id])
+    return { rows }
 }
 
 export async function atualizar_cliente(id, dados) {
-    const atualizacao = {}
-    if (dados.nomeCliente) atualizacao.nomeCliente = dados.nomeCliente
-    if (dados.contato) atualizacao.contato = dados.contato
-    if (dados.documento) atualizacao.documento = dados.documento
+    const campos = []
+    const valores = []
+    let contador = 1
 
-    await Cliente.update(atualizacao, {
-        where: { idCliente: id }
-    })
-    
-    const resultado = await Cliente.findByPk(id)
-    return { rows: [resultado.toJSON()] }
+    if (dados.nomeCliente) {
+        campos.push(`"nomeCliente" = $${contador++}`)
+        valores.push(dados.nomeCliente)
+    }
+    if (dados.contato) {
+        campos.push(`"contato" = $${contador++}`)
+        valores.push(dados.contato)
+    }
+    if (dados.documento) {
+        campos.push(`"documento" = $${contador++}`)
+        valores.push(dados.documento)
+    }
+
+    if (campos.length === 0) {
+        return buscar_cliente(id)
+    }
+
+    valores.push(id)
+    const query = `
+        UPDATE "Cliente"
+        SET ${campos.join(', ')}
+        WHERE "idCliente" = $${contador}
+        RETURNING *
+    `
+    const { rows } = await pool.query(query, valores)
+    return { rows }
 }
 
 export async function deletar_cliente(id) {
-    await Cliente.destroy({
-        where: { idCliente: id }
-    })
+    await pool.query('DELETE FROM "Cliente" WHERE "idCliente" = $1', [id])
     return { rows: [{ id }] }
 }

@@ -1,6 +1,7 @@
 import * as pedidoRepository from "../repositories/pedidos.repository.js";
 import * as produtoRepository from "../repositories/produtos.repository.js";
 import * as clienteRepository from "../repositories/cliente.repository.js";
+import * as calcularRepository from "../repositories/calcular.repository.js";
 
 export async function cadastrar_pedido(dados) {
   const idCliente = Number(dados.idCliente);
@@ -143,4 +144,14 @@ export async function entregar_pedido(id, dados) {
 export async function listar_itens() {
   const result = await pedidoRepository.listar_todos_os_itens()
   return result.rows
+}
+
+export async function obter_total_pedido(id) {
+  const idPedido = Number(id)
+  if (!Number.isInteger(idPedido) || idPedido <= 0) {
+    throw new Error("ID inválido")
+  }
+
+  const result = await calcularRepository.calcular_total_pedido(idPedido)
+  return result.rows[0]
 }

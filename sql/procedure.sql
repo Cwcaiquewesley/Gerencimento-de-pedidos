@@ -15,22 +15,22 @@ DECLARE
     v_valorTotal FLOAT := 0;
 BEGIN
     -- Cria o pedido
-    INSERT INTO "Pedido" ("idCliente", "local", "horaPedido", "valorTotal")
+    INSERT INTO Pedido (idCliente, local, horaPedido, valorTotal)
     VALUES (p_idCliente, p_local, CURRENT_TIMESTAMP, 0)
-    RETURNING "idPedido" INTO v_idPedido;
+    RETURNING idPedido INTO v_idPedido;
 
     -- Insere itens e acumula o total
     FOREACH v_item IN ARRAY p_itens LOOP
-        SELECT "valor"
+        SELECT valor
           INTO v_valorUnit
-          FROM "Produto"
-         WHERE "idProduto" = v_item.idProduto;
+          FROM Produto
+         WHERE idProduto = v_item.idProduto;
 
-        INSERT INTO "ItemPedido" (
-            "idPedido",
-            "idProduto",
-            "quantidade",
-            "valorUnitario"
+        INSERT INTO ItemPedido (
+            idPedido,
+            idProduto,
+            quantidade,
+            valorUnitario
         )
         VALUES (
             v_idPedido,
@@ -43,9 +43,9 @@ BEGIN
     END LOOP;
 
     -- Atualiza valor total do pedido
-    UPDATE "Pedido"
-       SET "valorTotal" = v_valorTotal
-     WHERE "idPedido" = v_idPedido;
+    UPDATE Pedido
+       SET valorTotal = v_valorTotal
+     WHERE idPedido = v_idPedido;
 END;
 $$;
 
@@ -57,9 +57,9 @@ CREATE OR REPLACE PROCEDURE entregar_pedido(
 LANGUAGE plpgsql
 AS $$
 BEGIN
-    UPDATE "Pedido"
-       SET "horaEntrega" = CURRENT_TIMESTAMP
-     WHERE "idPedido"    = p_idPedido;
+    UPDATE Pedido
+       SET horaEntrega = CURRENT_TIMESTAMP
+     WHERE idPedido    = p_idPedido;
 END;
 $$;
 

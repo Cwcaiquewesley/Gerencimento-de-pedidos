@@ -1,58 +1,73 @@
-import { Produto } from '../models/index.js'
-
+import pool from '../config/database.js'
 
 export async function cadastrar_produto(dados) {
-  const resultado = await Produto.create({
-    nomeProduto: dados.nomeProduto,  
-    tipo: dados.tipo,
-    valor: dados.valor,
-    quantidade: dados.quantidade,
-    status: dados.status
-  })
-
-  return { rows: [resultado.toJSON()] }
+  const query = `
+        INSERT INTO "Produto" ("nomeProduto", "tipo", "valor", "quantidade", "status")
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING *
+    `
+  const { rows } = await pool.query(query, [
+    dados.nomeProduto,
+    dados.tipo,
+    dados.valor,
+    dados.quantidade,
+    dados.status
+  ])
+  return { rows }
 }
 
-
 export async function listar_produtos() {
-    const resultado = await Produto.findAll()
-    return { rows: resultado.map(p => p.toJSON()) }
+  const { rows } = await pool.query('SELECT * FROM "Produto"')
+  return { rows }
 }
 
 export async function buscar_produto(id) {
-    const resultado = await Produto.findByPk(id)
-    return resultado ? { rows: [resultado.toJSON()] } : { rows: [] }
+  const { rows } = await pool.query('SELECT * FROM "Produto" WHERE "idProduto" = $1', [id])
+  return { rows }
 }
 
 export async function atualizar_produto(id, dados) {
-  const atualizacao = {}
+  const campos = []
+  const valores = []
+  let contador = 1
 
   if (dados.nomeProduto !== undefined) {
-    atualizacao.nomeProduto = dados.nomeProduto
+    campos.push(`"nomeProduto" = $${contador++}`)
+    valores.push(dados.nomeProduto)
   }
   if (dados.tipo !== undefined) {
-    atualizacao.tipo = dados.tipo
+    campos.push(`"tipo" = $${contador++}`)
+    valores.push(dados.tipo)
   }
   if (dados.valor !== undefined) {
-    atualizacao.valor = dados.valor
+    campos.push(`"valor" = $${contador++}`)
+    valores.push(dados.valor)
   }
   if (dados.quantidade !== undefined) {
-    atualizacao.quantidade = dados.quantidade
+    campos.push(`"quantidade" = $${contador++}`)
+    valores.push(dados.quantidade)
   }
   if (dados.status !== undefined) {
-    atualizacao.status = dados.status
+    campos.push(`"status" = $${contador++}`)
+    valores.push(dados.status)
   }
 
-  await Produto.update(atualizacao, { where: { idProduto: id } })
+  if (campos.length === 0) {
+    return buscar_produto(id)
+  }
 
-  const resultado = await Produto.findByPk(id)
-  return { rows: [resultado.toJSON()] }
+  valores.push(id)
+  const query = `
+        UPDATE "Produto"
+        SET ${campos.join(', ')}
+        WHERE "idProduto" = $${contador}
+        RETURNING *
+    `
+  const { rows } = await pool.query(query, valores)
+  return { rows }
 }
 
-
 export async function deletar_produto(id) {
-    await Produto.destroy({
-        where: { idProduto: id }
-    })
-    return { rows: [{ id }] }
+  await pool.query('DELETE FROM "Produto" WHERE "idProduto" = $1', [id])
+  return { rows: [{ id }] }
 }

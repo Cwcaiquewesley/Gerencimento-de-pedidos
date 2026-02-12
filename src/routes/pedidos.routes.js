@@ -11,5 +11,6 @@ router.put('/pedidos/:id', validarID, pedidosController.atualizar_pedido)
 router.delete('/pedidos/:id', validarID, pedidosController.deletar_pedido)
 router.post('/pedidos/:id/entregar', validarID, pedidosController.entregar_pedido)
 router.get('/itens', pedidosController.listar_itens)
+router.get('/pedidos/:id/total', validarID, pedidosController.obter_total_pedido)
 
 export default router

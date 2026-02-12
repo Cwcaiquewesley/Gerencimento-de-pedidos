@@ -89,3 +89,18 @@ export async function listar_itens(req, res) {
         return res.status(500).json({ erro: err.message })
     }
 }
+
+export async function obter_total_pedido(req, res) {
+    try {
+        const id = Number(req.params.id)
+        const total = await pedidosService.obter_total_pedido(id)
+
+        if (!total) {
+            return res.status(404).json({ erro: 'Total do pedido não encontrado' })
+        }
+
+        return res.status(200).json(total)
+    } catch (err) {
+        return res.status(500).json({ erro: err.message })
+    }
+}
